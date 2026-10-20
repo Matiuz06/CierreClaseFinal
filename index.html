@@ -83,7 +83,9 @@
   #resultColor { display: inline-flex; align-items: center; gap: 9px; font-size: 1.12rem; font-weight: 900; margin: 8px 0 10px; }
   .dot { width: 17px; height: 17px; border-radius: 50%; display: inline-block; border: 2px solid #ffffffa8; }
   #question { font-size: clamp(1.2rem, 2vw, 1.65rem); line-height: 1.4; margin: 0; font-weight: 700; }
-  .right-panel h2 { margin: 0 0 5px; font-size: 1.35rem; }
+  .right-panel { display: flex; align-items: stretch; min-height: 240px; }
+  .right-panel .result-card { margin-top: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+  .right-panel #question { font-size: clamp(1.35rem, 2.3vw, 2rem); }
   .intro { margin: 0 0 16px; color: #c9c0ae; font-size: .95rem; }
   .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 18px; }
   .legend span { display: inline-flex; gap: 7px; align-items: center; font-size: .86rem; color: #e8dfcf; }
@@ -126,22 +128,14 @@
     </div>
     <button id="spinButton" class="spin-button" type="button">Girar la ruleta</button>
     <p class="hint">El color ganador se determina por el sector que queda bajo la punta.</p>
+  </section>
+
+  <section class="panel right-panel" aria-label="Resultado del giro">
     <div class="result-card" aria-live="polite">
       <div class="result-label">Resultado del giro</div>
       <div id="resultColor"><span class="dot" style="background:#087443"></span> Verde</div>
       <p id="question">Presioná «Girar la ruleta» para seleccionar una pregunta.</p>
     </div>
-  </section>
-
-  <section class="panel right-panel">
-    <h2>Preguntas aleatorias</h2>
-    <p class="intro">La pregunta aparecerá únicamente cuando la ruleta se detenga.</p>
-    <div class="legend" aria-label="Leyenda de colores">
-      <span><i class="dot" style="background:#b51f30"></i> Rojo · Conceptos</span>
-      <span><i class="dot" style="background:#17191d"></i> Negro · Representación y longitud</span>
-      <span><i class="dot" style="background:#087443"></i> Verde · Análisis y justificación</span>
-    </div>
-    <p class="small-note">Después de cada giro, pedir que la respuesta se justifique oralmente y, cuando corresponda, mediante escritura simbólica.</p>
   </section>
 </main>
 <footer>Recurso local · Funciona sin conexión a Internet</footer>
