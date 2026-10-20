@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de preguntas | Ciclos y grafos cíclicos</title>
+<style>
+  :root {
+    --gold: #d8b56d;
+    --gold-light: #f6e4aa;
+    --dark: #101113;
+    --panel: #191b1f;
+    --cream: #fff5dc;
+    --green: #087443;
+    --red: #a81727;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--cream);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse at top, #292b30 0%, #111214 58%, #08090a 100%);
+  }
+  header { text-align: center; padding: 22px 16px 8px; }
+  .eyebrow {
+    color: var(--gold-light); text-transform: uppercase; letter-spacing: .18em;
+    font-size: .78rem; font-weight: 800;
+  }
+  h1 { margin: 6px 0 4px; font-size: clamp(1.65rem, 3.4vw, 2.7rem); line-height: 1.12; }
+  .subtitle { margin: 0; color: #d1c8b4; font-size: clamp(.95rem, 1.5vw, 1.1rem); }
+  main {
+    width: min(1180px, 96vw); margin: 16px auto 34px;
+    display: grid; grid-template-columns: minmax(300px, 1.03fr) minmax(300px, .97fr);
+    gap: 20px; align-items: start;
+  }
+  .panel {
+    background: linear-gradient(145deg, rgba(35,37,41,.97), rgba(17,18,20,.98));
+    border: 1px solid #5b4c31; border-radius: 18px;
+    box-shadow: 0 12px 34px #0008, inset 0 1px #ffffff0b;
+    padding: clamp(14px, 2vw, 24px);
+  }
+  .wheel-area { display: flex; flex-direction: column; align-items: center; }
+  .wheel-frame {
+    position: relative; width: min(100%, 500px); aspect-ratio: 1;
+    padding: 14px; border-radius: 50%;
+    background: conic-gradient(from 0deg, #f7e5a4, #7d5a21, #fff0b7, #8e6b2d, #f7e5a4);
+    box-shadow: 0 0 0 4px #211a0f, 0 0 0 7px #a17c3e, 0 14px 30px #000b;
+  }
+  .wheel-frame::before {
+    content: ""; position: absolute; inset: 7px; border-radius: 50%;
+    border: 2px solid #fff0b1; pointer-events: none; z-index: 2;
+  }
+  #wheel { display: block; width: 100%; height: 100%; border-radius: 50%; }
+  .pointer {
+    position: absolute; z-index: 5; left: 50%; top: -4px; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
+    border-top: 37px solid #fff1b4; border-bottom: 0;
+    filter: drop-shadow(0 3px 2px #000c);
+  }
+  .pointer::after {
+    content: ""; position: absolute; left: -10px; top: -35px;
+    border-left: 10px solid transparent; border-right: 10px solid transparent;
+    border-top: 20px solid #a51b2a;
+  }
+  .spin-button {
+    margin-top: 25px; border: 2px solid #f1d58d; border-radius: 999px;
+    padding: 14px 34px; color: #21170a; font-weight: 900; font-size: 1.1rem;
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+    background: linear-gradient(#fff0b5, #c89b43); box-shadow: 0 5px 0 #6d4a18, 0 9px 18px #0007;
+    transition: transform .12s, filter .12s;
+  }
+  .spin-button:hover { filter: brightness(1.08); }
+  .spin-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #6d4a18; }
+  .spin-button:disabled { opacity: .65; cursor: wait; }
+  .hint { color: #c9c0ae; font-size: .88rem; text-align: center; margin: 12px 0 0; }
+  .result-card {
+    width: 100%; margin-top: 20px; padding: 18px; border-radius: 14px;
+    border: 1px solid #75613d; background: #0d0e10;
+  }
+  .result-label { color: var(--gold-light); text-transform: uppercase; letter-spacing: .14em; font-size: .76rem; font-weight: 800; }
+  #resultColor { display: inline-flex; align-items: center; gap: 9px; font-size: 1.12rem; font-weight: 900; margin: 8px 0 10px; }
+  .dot { width: 17px; height: 17px; border-radius: 50%; display: inline-block; border: 2px solid #ffffffa8; }
+  #question { font-size: clamp(1.2rem, 2vw, 1.65rem); line-height: 1.4; margin: 0; font-weight: 700; }
+  .right-panel h2 { margin: 0 0 5px; font-size: 1.35rem; }
+  .intro { margin: 0 0 16px; color: #c9c0ae; font-size: .95rem; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 18px; }
+  .legend span { display: inline-flex; gap: 7px; align-items: center; font-size: .86rem; color: #e8dfcf; }
+  .legend .dot { width: 13px; height: 13px; }
+  .question-list { display: grid; gap: 9px; }
+  .q-item {
+    display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start;
+    padding: 11px 12px; border: 1px solid #ffffff16; border-radius: 10px;
+    background: #ffffff06; color: #f1eadc; line-height: 1.35;
+  }
+  .q-number {
+    width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%;
+    color: #17120a; font-weight: 900; background: linear-gradient(#f4dfa0, #bd8c36);
+  }
+  .q-item p { margin: 3px 0 0; }
+  .small-note { color: #b8af9e; font-size: .8rem; margin: 14px 0 0; line-height: 1.4; }
+  footer { text-align: center; padding: 0 14px 22px; color: #928a7d; font-size: .78rem; }
+  @media (max-width: 780px) {
+    main { grid-template-columns: 1fr; width: min(620px, 94vw); }
+    header { padding-top: 18px; }
+    .wheel-frame { width: min(88vw, 430px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Didáctica Práctica Docente II · Lógica</div>
+  <h1>Ruleta de preguntas</h1>
+  <p class="subtitle">Ciclos y grafos cíclicos · Clase 7</p>
+</header>
+
+<main>
+  <section class="panel wheel-area" aria-label="Ruleta interactiva">
+    <div class="wheel-frame">
+      <div class="pointer" aria-hidden="true"></div>
+      <canvas id="wheel" width="900" height="900" aria-label="Ruleta dividida en sectores rojos, negros y verdes"></canvas>
+    </div>
+    <button id="spinButton" class="spin-button" type="button">Girar la ruleta</button>
+    <p class="hint">El color ganador se determina por el sector que queda bajo la punta.</p>
+    <div class="result-card" aria-live="polite">
+      <div class="result-label">Resultado del giro</div>
+      <div id="resultColor"><span class="dot" style="background:#087443"></span> Verde</div>
+      <p id="question">Presioná «Girar la ruleta» para seleccionar una pregunta.</p>
+    </div>
+  </section>
+
+  <section class="panel right-panel">
+    <h2>Preguntas aleatorias</h2>
+    <p class="intro">La pregunta aparecerá únicamente cuando la ruleta se detenga.</p>
+    <div class="legend" aria-label="Leyenda de colores">
+      <span><i class="dot" style="background:#b51f30"></i> Rojo · Conceptos</span>
+      <span><i class="dot" style="background:#17191d"></i> Negro · Representación y longitud</span>
+      <span><i class="dot" style="background:#087443"></i> Verde · Análisis y justificación</span>
+    </div>
+    <p class="small-note">Después de cada giro, pedir que la respuesta se justifique oralmente y, cuando corresponda, mediante escritura simbólica.</p>
+  </section>
+</main>
+<footer>Recurso local · Funciona sin conexión a Internet</footer>
+
+<script>
+(() => {
+  "use strict";
+  const groups = [
+    {
+      color: "Rojo", hex: "#b51f30", text: "#ffffff",
+      questions: [
+        "¿Qué es un ciclo en un grafo?",
+        "¿Qué condición debe cumplir un recorrido para ser un ciclo?",
+        "¿Cuándo podemos afirmar que un grafo es cíclico?"
+      ]
+    },
+    {
+      color: "Negro", hex: "#17191d", text: "#ffffff",
+      questions: [
+        "¿Cómo se determina la longitud de un ciclo?",
+        "Si un ciclo tiene las aristas A–B, B–C y C–A, ¿cuál es su longitud?"
+      ]
+    },
+    {
+      color: "Verde", hex: "#087443", text: "#ffffff",
+      questions: [
+        "¿Qué diferencia hay entre un ciclo y un grafo cíclico?"
+      ]
+    }
+  ];
+
+  // Cada color se repite en sectores iguales. La pregunta se elige dentro del color
+  // realmente señalado al detenerse la ruleta.
+  const sectorColors = [
+    groups[0], groups[1], groups[2], groups[0], groups[1], groups[2],
+    groups[0], groups[1], groups[2], groups[0], groups[1], groups[2]
+  ];
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const button = document.getElementById("spinButton");
+  const resultColor = document.getElementById("resultColor");
+  const question = document.getElementById("question");
+  const questionList = document.getElementById("questionList");
+  const TAU = Math.PI * 2;
+  const sector = TAU / sectorColors.length;
+  let rotation = 0;
+  let spinning = false;
+
+  function drawWheel(angle) {
+    const w = canvas.width, cx = w / 2, cy = w / 2, radius = w * 0.465;
+    ctx.clearRect(0, 0, w, w);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    for (let i = 0; i < sectorColors.length; i++) {
+      const start = -Math.PI / 2 + i * sector;
+      const end = start + sector;
+      const group = sectorColors[i];
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, start, end);
+      ctx.closePath();
+      ctx.fillStyle = group.hex;
+      ctx.fill();
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = "#d9b86e";
+      ctx.stroke();
+
+      // Número grande para que los sectores se distingan desde el salón.
+      const mid = start + sector / 2;
+      ctx.save();
+      ctx.rotate(mid);
+      ctx.translate(radius * 0.72, 0);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = group.text;
+      ctx.font = "bold 46px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), 0, 0);
+      ctx.restore();
+    }
+    // Centro metálico
+    const grad = ctx.createRadialGradient(-18, -22, 8, 0, 0, 90);
+    grad.addColorStop(0, "#fff0b8");
+    grad.addColorStop(.48, "#c69a49");
+    grad.addColorStop(1, "#5e4119");
+    ctx.beginPath();
+    ctx.arc(0, 0, 83, 0, TAU);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = "#f7e5a4";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, 0, TAU);
+    ctx.fillStyle = "#282017";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function normalize(angle) {
+    return ((angle % TAU) + TAU) % TAU;
+  }
+
+  // La punta está fija arriba (-PI/2 en pantalla). Convertimos ese ángulo
+  // al sistema de la ruleta para obtener el sector que realmente queda debajo.
+  function selectedSector(finalRotation) {
+    const pointerAngle = -Math.PI / 2;
+    const localAngle = normalize(pointerAngle - finalRotation + Math.PI / 2);
+    return Math.floor(localAngle / sector) % sectorColors.length;
+  }
+
+  function renderQuestionBank() { /* Las preguntas no se muestran antes del giro. */ }
+
+  function showResult(index) {
+    const group = sectorColors[index];
+    const pool = group.questions;
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    resultColor.innerHTML = "";
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = group.hex;
+    const label = document.createElement("span");
+    label.textContent = group.color;
+    resultColor.append(dot, label);
+    question.textContent = chosen;
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    button.disabled = true;
+    button.textContent = "Girando…";
+    const startRotation = rotation;
+    const targetIndex = Math.floor(Math.random() * sectorColors.length);
+    // Apuntar al centro del sector elegido. El giro termina con el centro
+    // del sector bajo la punta; el color anunciado se calcula luego desde la posición.
+    const targetAngle = (TAU - ((targetIndex + .5) * sector)) % TAU;
+    const current = normalize(startRotation);
+    const delta = normalize(targetAngle - current);
+    const extraTurns = 5 + Math.floor(Math.random() * 4);
+    const finalRotation = startRotation + extraTurns * TAU + delta;
+    const duration = 4200 + Math.random() * 700;
+    const startTime = performance.now();
+
+    function animate(now) {
+      const t = Math.min(1, (now - startTime) / duration);
+      // Desaceleración progresiva y suave.
+      const eased = 1 - Math.pow(1 - t, 4);
+      rotation = startRotation + (finalRotation - startRotation) * eased;
+      drawWheel(rotation);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        rotation = normalize(finalRotation);
+        drawWheel(rotation);
+        const actualIndex = selectedSector(rotation);
+        showResult(actualIndex);
+        spinning = false;
+        button.disabled = false;
+        button.textContent = "Girar de nuevo";
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  renderQuestionBank();
+  drawWheel(rotation);
+  button.addEventListener("click", spin);
+})();
+</script>
+</body>
+</html>
